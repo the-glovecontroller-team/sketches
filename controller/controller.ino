@@ -10,9 +10,10 @@
 #include "SmoothGyro.h"
 
 #define FINGER_1_PIN 9
-#define FINGER_2_PIN 9
-#define FINGER_3_PIN 9
-#define FINGER_4_PIN 9
+// Раскомментируйте строчки ниже, если вы будете использовать остальные пальцы
+//#define FINGER_2_PIN 9
+//#define FINGER_3_PIN 9
+//#define FINGER_4_PIN 9
 
 // Задержка отправки данных, мс
 const int T_OUT = 100; 
@@ -60,9 +61,10 @@ void loop() {
     String status = "";
     // Добавляем к статусу состояние каждого пальца
     status += (digitalRead(FINGER_1_PIN) == 1) ? "A:" : "N:";
-    status += (digitalRead(FINGER_2_PIN) == 1) ? "A:" : "N:";
-    status += (digitalRead(FINGER_3_PIN) == 1) ? "A:" : "N:";
-    status += (digitalRead(FINGER_4_PIN) == 1) ? "A:" : "N:";
+//  Раскомментируйте строчки ниже, если хотите использовать больше пальцев
+//    status += (digitalRead(FINGER_2_PIN) == 1) ? "B:" : "N:";
+//    status += (digitalRead(FINGER_3_PIN) == 1) ? "C:" : "N:";
+//    status += (digitalRead(FINGER_4_PIN) == 1) ? "D:" : "N:";
 
     // Обновляем позицию гироскопа (считываем данные)
     gyro->updatePosition();

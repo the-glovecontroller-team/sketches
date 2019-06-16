@@ -9,11 +9,10 @@
 
 #include "SmoothGyro.h"
 
-#define FINGER_1_PIN 9
-// Раскомментируйте строчки ниже, если вы будете использовать остальные пальцы
-//#define FINGER_2_PIN 9
-//#define FINGER_3_PIN 9
-//#define FINGER_4_PIN 9
+#define FINGER_1_PIN 8
+#define FINGER_2_PIN 9
+#define FINGER_3_PIN 10
+#define FINGER_4_PIN 11
 
 // Задержка отправки данных, мс
 const int T_OUT = 100; 
@@ -21,6 +20,7 @@ const int T_OUT = 100;
 SmoothGyro* gyro;
 
 long int t_next;
+
 
 /*
  * Подготовка устройства
@@ -32,6 +32,11 @@ void setup() {
   #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
     Fastwire::setup(400, true);
   #endif
+
+  pinMode(FINGER_1_PIN, INPUT);
+  pinMode(FINGER_2_PIN, INPUT);
+  pinMode(FINGER_3_PIN, INPUT);
+  pinMode(FINGER_4_PIN, INPUT);
   
 
   Serial.begin(9600);
@@ -40,14 +45,14 @@ void setup() {
   Serial.println("Initializing I2C devices...");
 
   // Подключаемся к гироскопу, инициализируем его
-  MPU6050 mpu;
-  mpu.initialize();
+  MPU6050* mpu = new MPU6050();
+  mpu->initialize();
   
   // Проверяем соединение
-  Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+  Serial.println(mpu->testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
   // Создаем удобную обертку над гироскопом, сглаживающую показания
-  gyro = new SmoothGyro(&mpu);
+  gyro = new SmoothGyro(mpu);
 }
 
 /*
@@ -61,10 +66,9 @@ void loop() {
     String status = "";
     // Добавляем к статусу состояние каждого пальца
     status += (digitalRead(FINGER_1_PIN) == 1) ? "A:" : "N:";
-//  Раскомментируйте строчки ниже, если хотите использовать больше пальцев
-//    status += (digitalRead(FINGER_2_PIN) == 1) ? "B:" : "N:";
-//    status += (digitalRead(FINGER_3_PIN) == 1) ? "C:" : "N:";
-//    status += (digitalRead(FINGER_4_PIN) == 1) ? "D:" : "N:";
+    status += (digitalRead(FINGER_2_PIN) == 1) ? "A:" : "N:";
+    status += (digitalRead(FINGER_3_PIN) == 1) ? "A:" : "N:";
+    status += (digitalRead(FINGER_4_PIN) == 1) ? "A:" : "N:";
 
     // Обновляем позицию гироскопа (считываем данные)
     gyro->updatePosition();
@@ -76,10 +80,11 @@ void loop() {
     status += ":";
     // Записываем поворот вокруг оси Z
     status += gyro->getZ();
+    status += ":\n:";
 
     // Передаем результат по серийному порту. 
     // Важно передавать результат единым целым, чтобы получателям было удобно его читать
-    Serial.println(status);
+    Serial.print(status);
 
     t_next = t + T_OUT;
   }

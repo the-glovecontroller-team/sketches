@@ -1,7 +1,11 @@
 #include "SmoothGyro.h"
 
 SmoothGyro::SmoothGyro(MPU6050* mpu) {
-    this->mpu = mpu; 
+    this->mpu = mpu;
+    this->updX = 0; 
+    this->updY = 0;
+    this->updZ = 0;
+    this->divider = DEFAULT_POSITIONS / POSITIONS; // Вычисляем множитель для перевода значений в нужный диапазон
 }
 
 SmoothGyro::~SmoothGyro() {
@@ -15,33 +19,48 @@ void SmoothGyro::updatePosition() {
     mpu->getMotion6(&rX, &rY, &rZ, &gx_raw, &gy_raw, &gz_raw);
 
     // Обновляем значения
-    updateVar(rX, &memX, &updX);
-    updateVar(rY, &memY, &updY);
-    updateVar(rZ, &memZ, &updZ);
+    updateVar(rX, arrX, &updX);
+    updateVar(rY, arrY, &updY);
+    updateVar(rZ, arrZ, &updZ);
 }
 
-void SmoothGyro::updateVar(int16_t newVal, int32_t* mem, int16_t* upd) {
-    // Если новое значение больше усредненного текущего на порог допустимого отклонения, то обновляем текущее.
-    if (abs(newVal - round(*mem / *upd)) > DELTA_ANGLE) {
-        *upd = 1;
-        *mem = newVal;
-    } 
-    // Если новое значение не отличается от текущего значительно, а также если текущее значение не сглаживалось SMOOTH_TIMES, то сглаживаем предыдущее
-    else if (*upd < SMOOTH_TIMES) {
-        *upd++;
-        *mem += newVal;
+void SmoothGyro::updateVar(int16_t newVal, int16_t* arr, int16_t* upd) {
+    // Если массив заполнен, выкидываем первое значение, и записываем новое в конец.
+    if (*upd == SMOOTH_TIMES) {
+        for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
+          arr[i] = arr[i + 1];
+        }
+        arr[SMOOTH_TIMES - 1] = newVal;
+    }
+    // Иначе просто записываем значение в конец массива
+    else {
+        arr[*upd] = newVal;
+        (*upd)++;
     }
 }
 
+
 // Возвращаем красивое удобное значение: среднее и переведенное в выбранный диапазон
 int16_t SmoothGyro::getX() {
-    return memX * POSITIONS / (updX * DEFAULT_POSITIONS);
+    int32_t sum = 0;
+    for (int i = 0; i < updX; i++) {
+      sum += arrX[i];
+    }
+    return (int16_t)(sum / (updX * divider));
 }
 
 int16_t SmoothGyro::getY() {
-    return memY * POSITIONS / (updY * DEFAULT_POSITIONS);
+    int32_t sum = 0;
+    for (int i = 0; i < updY; i++) {
+      sum += arrY[i];
+    }
+    return (int16_t)(sum / (updY * divider));
 }
 
 int16_t SmoothGyro::getZ() {
-    return memZ * POSITIONS / (updZ * DEFAULT_POSITIONS);
+    int32_t sum = 0;
+    for (int i = 0; i < updZ; i++) {
+      sum += arrZ[i];
+    }
+    return (int16_t)(sum / (updZ * divider));
 }

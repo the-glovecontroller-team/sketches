@@ -13,10 +13,13 @@
 
 class SmoothGyro {
     public:
-        SmoothGyro(MPU6050* mpu);
+        SmoothGyro();
         ~SmoothGyro();
 
-        // Обновить зн ачения
+        // Проверить подключение гироскопа
+        bool testConnection();
+
+        // Обновить значения
         void updatePosition();
 
         // Получить значения

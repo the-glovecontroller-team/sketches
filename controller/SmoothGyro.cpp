@@ -1,7 +1,24 @@
 #include "SmoothGyro.h"
+#include <MPU6050.h>
 
-SmoothGyro::SmoothGyro(MPU6050* mpu) {
-    this->mpu = mpu;
+// Подключаем библиотеку Arduino Wire, если в I2Cdev.h используется реализация I2Cdev I2CDEV_ARDUINO_WIRE
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  #include "Wire.h"
+#endif
+
+SmoothGyro::SmoothGyro() {
+    // Подключаемся к I2C шине (библиотека I2Cdev не делает это автоматически)
+    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+      Wire.begin();
+    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+      Fastwire::setup(400, true);
+    #endif
+    
+    // Подключаемся к гироскопу, инициализируем его
+    this->mpu = new MPU6050();
+    this->mpu->initialize();
+
+    //Инициализируем переменные
     this->updX = 0; 
     this->updY = 0;
     this->updZ = 0;
@@ -10,6 +27,10 @@ SmoothGyro::SmoothGyro(MPU6050* mpu) {
 
 SmoothGyro::~SmoothGyro() {
     delete mpu;
+}
+
+bool SmoothGyro::testConnection() {
+  return mpu->testConnection();
 }
 
 void SmoothGyro::updatePosition() {

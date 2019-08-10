@@ -1,28 +1,20 @@
 #include "SmoothGyro.h"
-#include <MPU6050.h>
-
-// Подключаем библиотеку Arduino Wire, если в I2Cdev.h используется реализация I2Cdev I2CDEV_ARDUINO_WIRE
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-  #include "Wire.h"
-#endif
 
 SmoothGyro::SmoothGyro() {
-    // Подключаемся к I2C шине (библиотека I2Cdev не делает это автоматически)
-    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-      Wire.begin();
-    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-      Fastwire::setup(400, true);
-    #endif
     
     // Подключаемся к гироскопу, инициализируем его
-    this->mpu = new MPU6050();
-    this->mpu->initialize();
+    mpu = new AccelGyroController();
 
     //Инициализируем переменные
-    this->updX = 0; 
-    this->updY = 0;
-    this->updZ = 0;
-    this->divider = DEFAULT_POSITIONS / POSITIONS; // Вычисляем множитель для перевода значений в нужный диапазон
+    updX = 0; 
+    updY = 0;
+    updZ = 0;
+    divider = DEFAULT_POSITIONS / POSITIONS; // Вычисляем множитель для перевода значений в нужный диапазон
+
+    s = 0;
+    a = 0;
+    old_a = 0;
+    old_s = 0;
 }
 
 SmoothGyro::~SmoothGyro() {
@@ -39,10 +31,12 @@ void SmoothGyro::updatePosition() {
     int16_t gx_raw, gy_raw, gz_raw;
     mpu->getMotion6(&rX, &rY, &rZ, &gx_raw, &gy_raw, &gz_raw);
 
+//    int16_t accelX = mpu->getAccelerationX();
+
     // Обновляем значения
     updateVar(rX, arrX, &updX);
     updateVar(rY, arrY, &updY);
-    updateVar(rZ, arrZ, &updZ);
+    updateVar(gz_raw, arrZ, &updZ);
 }
 
 void SmoothGyro::updateVar(int16_t newVal, int16_t* arr, int16_t* upd) {
@@ -84,4 +78,13 @@ int16_t SmoothGyro::getZ() {
       sum += arrZ[i];
     }
     return (int16_t)(sum / (updZ * divider));
+}
+
+double SmoothGyro::getPosX(long int timeElapsed) {
+    old_a = a;
+    old_s = s;
+    a = mpu->getAccelerationX();
+    s = (old_a + a) * timeElapsed / 2.0;
+    double x = (old_s + s) * timeElapsed / 2.0;
+    return x;
 }

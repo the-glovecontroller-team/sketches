@@ -1,5 +1,5 @@
 #pragma once
-#include <MPU6050.h>
+#include "AccelGyroController.h"
 #include <math.h>
 
 // Количество различимых углов наклона на выходе
@@ -27,6 +27,8 @@ class SmoothGyro {
         int16_t getY();
         int16_t getZ();
 
+        double getPosX(long int timeElapsed);
+
     private:
         // Массивы с текущими значениями
         int16_t arrX[SMOOTH_TIMES], arrY[SMOOTH_TIMES], arrZ[SMOOTH_TIMES];
@@ -35,8 +37,13 @@ class SmoothGyro {
         // Множитель для перевода значений в нужный диапазон
         int16_t divider;
 
+        double s;
+        double a;
+        double old_a;
+        double old_s;
+
         // Гироскоп
-        MPU6050* mpu;
+        AccelGyroController* mpu;
 
         // Обновить значение
         void updateVar(int16_t newVal, int16_t* arr, int16_t* upd);

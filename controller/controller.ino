@@ -14,6 +14,8 @@ SmoothGyro* gyro;
 
 long int t_next;
 
+long int last_t;
+
 /*
  * Подготовка устройства
  */
@@ -31,6 +33,7 @@ void setup() {
   
   // Проверяем соединение
   Serial.println(gyro->testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+  last_t = millis();
 }
 
 /*
@@ -58,7 +61,7 @@ void loop() {
     status += gyro->getY();
     status += ",";
     // Записываем поворот вокруг оси Z
-    status += gyro->getZ();
+    status += gyro->getPosX(t - last_t);
     status += "\n";
 
     // Передаем результат по серийному порту. 
@@ -66,5 +69,6 @@ void loop() {
     Serial.print(status);
 
     t_next = t + T_OUT;
+    last_t = t;
   }
 }

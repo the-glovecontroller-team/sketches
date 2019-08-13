@@ -1,13 +1,10 @@
-#include "I2Cdev.h"
-
-//#include "MPU6050_6Axis_MotionApps20.h"
+#include <I2Cdev.h>
 
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
+#include "Wire.h"
 #endif
 
 #include "AccelGyroController.h"
-
 
 AccelGyroController::AccelGyroController() {
     AccelGyroController(false);
@@ -15,12 +12,12 @@ AccelGyroController::AccelGyroController() {
 
 AccelGyroController::AccelGyroController(bool withDmp) {
     // Подключаемся к I2C шине (библиотека I2Cdev не делает это автоматически)
-    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-        Wire.begin();
-        Wire.setClock(400000); // 400kHz I2C clock. Закомментируйте эту строчку, если возникнут проблемы с компиляцией.
-    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-        Fastwire::setup(400, true);
-    #endif
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    Wire.begin();
+    Wire.setClock(400000); // 400kHz I2C clock. Закомментируйте эту строчку, если возникнут проблемы с компиляцией.
+#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+    Fastwire::setup(400, true);
+#endif
 
     mpu = MPU6050(MPU6050_ADDRESS_AD0_LOW);
     mpu.initialize();
@@ -116,6 +113,12 @@ MPU6050* AccelGyroController::getMPU() {
 void AccelGyroController::enableDmp() {
     if (dmpEnabled) return;
 
+    // supply your own gyro offsets here, scaled for min sensitivity
+    mpu.setXGyroOffset(220);
+    mpu.setYGyroOffset(76);
+    mpu.setZGyroOffset(-85);
+    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+
     //TODO Enable DMP here
     dmpStatus = mpu.dmpInitialize();
 
@@ -134,12 +137,11 @@ void AccelGyroController::enableDmp() {
         attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
-        // set our DMP Ready flag so the main loop() function knows it's okay to use it
-        Serial.println(F("DMP ready! Waiting for first interrupt..."));
-
         // get expected DMP packet size for later comparison
         packetSize = mpu.dmpGetFIFOPacketSize();
 
+        // set our DMP Ready flag
+        Serial.println(F("DMP ready! Waiting for first interrupt..."));
         dmpEnabled = true;
     }
     else
@@ -151,15 +153,13 @@ void AccelGyroController::enableDmp() {
         Serial.print(dmpStatus);
     }
 
-    
+
 }
 
 void AccelGyroController::waitForDmpDataReady() {
     // wait for MPU interrupt or extra packet(s) available
-    while (!mpuInterrupt && fifoCount < packetSize)
-    {
-        if (mpuInterrupt && fifoCount < packetSize)
-        {
+    while (!mpuInterrupt && fifoCount < packetSize) {
+        if (mpuInterrupt && fifoCount < packetSize) {
             // try to get out of the infinite loop
             fifoCount = mpu.getFIFOCount();
         }
@@ -185,10 +185,8 @@ void AccelGyroController::waitForDmpDataReady() {
         // otherwise, check for DMP data ready interrupt (this should happen frequently)
     }
     else if (mpuIntStatus & _BV(MPU6050_INTERRUPT_DMP_INT_BIT)) {
-
         // read a packet from FIFO
-        while (fifoCount >= packetSize)
-        { // Lets catch up to NOW, someone is using the dreaded delay()!
+        while (fifoCount >= packetSize) { // Lets catch up to NOW, someone is using the dreaded delay()!
             mpu.getFIFOBytes(fifoBuffer, packetSize);
             // track FIFO count here in case there is > 1 packet available
             // (this lets us immediately read more without waiting for an interrupt)

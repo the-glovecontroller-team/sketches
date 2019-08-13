@@ -1,20 +1,14 @@
 #include "SmoothGyro.h"
 
 SmoothGyro::SmoothGyro() {
-    
     // Подключаемся к гироскопу, инициализируем его
-    mpu = new AccelGyroController();
+    mpu = new AccelGyroController(true);
 
     //Инициализируем переменные
-    updX = 0; 
-    updY = 0;
-    updZ = 0;
-    divider = DEFAULT_POSITIONS / POSITIONS; // Вычисляем множитель для перевода значений в нужный диапазон
-
-    s = 0;
-    a = 0;
-    old_a = 0;
-    old_s = 0;
+    xRotationUpdates = 0;
+    yRotationUpdates = 0;
+    // Вычисляем множитель для перевода значений в нужный диапазон
+    divider = DEFAULT_POSITIONS / POSITIONS;
 }
 
 SmoothGyro::~SmoothGyro() {
@@ -22,28 +16,28 @@ SmoothGyro::~SmoothGyro() {
 }
 
 bool SmoothGyro::testConnection() {
-  return mpu->testConnection();
+    return mpu->testConnection();
 }
 
 void SmoothGyro::updatePosition() {
-    // Считываем значения
-    int16_t rX, rY, rZ;
-    int16_t gx_raw, gy_raw, gz_raw;
-    mpu->getMotion6(&rX, &rY, &rZ, &gx_raw, &gy_raw, &gz_raw);
+    // Считываем значения с датчиков напрямую
+    int16_t accelX, accelY, accelZ;
+    int16_t gyroX, gyroY, gyroZ;
+    mpu->getMotion6(&accelX, &accelY, &accelZ, &gyroX, &gyroY, &gyroZ);
 
-//    int16_t accelX = mpu->getAccelerationX();
+    // Запоминаем значения с датчиков для сглаживания
+    updateVar(accelX, arrX, &xRotationUpdates);
+    updateVar(accelY, arrY, &yRotationUpdates);
 
-    // Обновляем значения
-    updateVar(rX, arrX, &updX);
-    updateVar(rY, arrY, &updY);
-    updateVar(gz_raw, arrZ, &updZ);
+    // Считываем значения из DMP
+    mpu->waitForDmpDataReady();
 }
 
 void SmoothGyro::updateVar(int16_t newVal, int16_t* arr, int16_t* upd) {
     // Если массив заполнен, выкидываем первое значение, и записываем новое в конец.
     if (*upd == SMOOTH_TIMES) {
         for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
-          arr[i] = arr[i + 1];
+            arr[i] = arr[i + 1];
         }
         arr[SMOOTH_TIMES - 1] = newVal;
     }
@@ -56,35 +50,30 @@ void SmoothGyro::updateVar(int16_t newVal, int16_t* arr, int16_t* upd) {
 
 
 // Возвращаем красивое удобное значение: среднее и переведенное в выбранный диапазон
-int16_t SmoothGyro::getX() {
+int16_t SmoothGyro::getXRotation() {
     int32_t sum = 0;
-    for (int i = 0; i < updX; i++) {
-      sum += arrX[i];
+    for (int i = 0; i < xRotationUpdates; i++) {
+        sum += arrX[i];
     }
-    return (int16_t)(sum / (updX * divider));
+    return (int16_t)(sum / (xRotationUpdates * divider));
 }
 
-int16_t SmoothGyro::getY() {
+int16_t SmoothGyro::getYRotation() {
     int32_t sum = 0;
-    for (int i = 0; i < updY; i++) {
-      sum += arrY[i];
+    for (int i = 0; i < yRotationUpdates; i++) {
+        sum += arrY[i];
     }
-    return (int16_t)(sum / (updY * divider));
+    return (int16_t)(sum / (yRotationUpdates * divider));
 }
 
-int16_t SmoothGyro::getZ() {
-    int32_t sum = 0;
-    for (int i = 0; i < updZ; i++) {
-      sum += arrZ[i];
-    }
-    return (int16_t)(sum / (updZ * divider));
+int16_t SmoothGyro::getXPosition() {
+    return mpu->getLinearAccelerationInWorldX() / 100;
 }
 
-double SmoothGyro::getPosX(long int timeElapsed) {
-    old_a = a;
-    old_s = s;
-    a = mpu->getAccelerationX();
-    s = (old_a + a) * timeElapsed / 2.0;
-    double x = (old_s + s) * timeElapsed / 2.0;
-    return x;
+int16_t SmoothGyro::getYPosition() {
+    return mpu->getLinearAccelerationInWorldY() / 100;
+}
+
+int16_t SmoothGyro::getZPosition() {
+    return mpu->getLinearAccelerationInWorldZ() / 100;
 }

@@ -21,7 +21,6 @@ AccelGyroController::AccelGyroController(bool withDmp) {
 
     mpu = MPU6050(MPU6050_ADDRESS_AD0_LOW);
     mpu.initialize();
-    Serial.println(mpu.testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
 
     dmpEnabled = false;
 

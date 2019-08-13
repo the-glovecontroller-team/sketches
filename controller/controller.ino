@@ -20,6 +20,8 @@ int yDirection;
 
 int getDirection(int prevDirection, int16_t delta);
 
+bool enableData;
+
 /*
    Подготовка устройства
 */
@@ -37,7 +39,7 @@ void setup() {
     gyro = new SmoothGyro();
 
     // Проверяем соединение
-    Serial.println(gyro->testConnection() ? "MPU6050 connection successful" : "MPU6050 connection failed");
+    Serial.println(gyro->testConnection() ? "MPU6050 connection successful. Send a character to start receiving data" : "MPU6050 connection failed");
 
     // Обнуляем переменные
     dXPos = 0;
@@ -47,12 +49,20 @@ void setup() {
     prevYPos = 0;
     prevZPos = 0;
     yDirection = 0;
+    enableData = false;
 }
 
 /*
    Цикл обработки событий
 */
 void loop() {
+    if (enableData == false) {
+        if (Serial.available() > 0) {
+            enableData = true;
+        }
+        return;
+    }
+    
     // Обрабатываем сдвиги
     int16_t xPos = gyro->getXPosition();
     int16_t yPos = gyro->getZPosition();

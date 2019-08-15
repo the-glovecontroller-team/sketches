@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SMOOTH_GYRO
+#define SMOOTH_GYRO
+
 #include "AccelGyroController.h"
 #include <math.h>
 
@@ -26,19 +28,21 @@ class SmoothGyro {
         int16_t getXRotation();
         int16_t getYRotation();
     
-        int16_t getXPosition();
-        int16_t getYPosition();
-        int16_t getZPosition();
+        int16_t getXAcceleration();
+        int16_t getYAcceleration();
+        int16_t getZAcceleration();
+
+        int16_t getZAccelerationDelta();
     
     private:
         // Массивы с текущими значениями
-        int16_t arrX[SMOOTH_TIMES], arrY[SMOOTH_TIMES], arrZ[SMOOTH_TIMES];
+        int16_t xRotValues[SMOOTH_TIMES], yRotValues[SMOOTH_TIMES], zAccelValues[SMOOTH_TIMES];
         // Текущее количество последних значений
-        int16_t xRotationUpdates, yRotationUpdates;
+        int16_t xRotationUpdates, yRotationUpdates, zAccelUpdates;
         // Множитель для перевода значений в нужный диапазон
         int16_t divider;
     
-        int16_t posZ;
+        int16_t prevZPos;
     
         // Гироскоп
         AccelGyroController* mpu;
@@ -46,3 +50,5 @@ class SmoothGyro {
         // Обновить значение
         void updateVar(int16_t newVal, int16_t* arr, int16_t* upd);
 };
+
+#endif

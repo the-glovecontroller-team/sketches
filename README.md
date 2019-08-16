@@ -10,5 +10,9 @@
 ## Робот манипулятор
 В качестве управляемого устройства для перчатки используется манипулятор [MeArm](https://create.arduino.cc/projecthub/benbobgray/mearm-robot-arm-your-robot-v1-0-326702).
 
-# :heavy_exclamation_mark: ВНИМАНИЕ :heavy_exclamation_mark:
-В коде используется библиотека [MPU6050](https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050), НО она модифицирована для возможности сделать обертку над ней. Модифицированная версия библиотеки позже появится в отдельном репозитории.
+# Перед тем, как начать
+Для того, чтобы скомпилировать код из этого репозитория, установите эти библиотеки:
+* [MPU6050](https://github.com/the-glovecontroller-team/MPU6050)
+* [I2Cdev](https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/I2Cdev)
+
+Не знаете как установить? Официальное руководство от Arduino: [тык](https://www.arduino.cc/en/Guide.Libraries#toc4)

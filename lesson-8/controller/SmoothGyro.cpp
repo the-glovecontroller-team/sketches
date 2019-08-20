@@ -57,20 +57,20 @@ void SmoothGyro::updateVar(int16_t newVal, int16_t* arr, int16_t* upd) {
 
 
 // Возвращаем сглаженное значение в заданном диапазоне
-int16_t SmoothGyro::getXRotation() {
+int SmoothGyro::getXRotation() {
     int32_t sum = 0;
     for (int i = 0; i < xRotationUpdates; i++) {
         sum += xRotValues[i];
     }
-    return (int16_t)(sum / (xRotationUpdates * divider));
+    return constrain((int)(sum / (xRotationUpdates * divider)), -100, 100);
 }
 
-int16_t SmoothGyro::getYRotation() {
+int SmoothGyro::getYRotation() {
     int32_t sum = 0;
     for (int i = 0; i < yRotationUpdates; i++) {
         sum += yRotValues[i];
     }
-    return (int16_t)(sum / (yRotationUpdates * divider));
+    return constrain((int)(sum / (yRotationUpdates * divider)), -100, 100);
 }
 
 // Для данных, полученных с DMP, сглаживание не требуется - оно выполняется на самом DMP

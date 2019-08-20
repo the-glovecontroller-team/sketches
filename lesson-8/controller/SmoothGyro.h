@@ -25,8 +25,8 @@ class SmoothGyro {
         void updatePosition();
     
         // Получить значения
-        int16_t getXRotation();
-        int16_t getYRotation();
+        int getXRotation();
+        int getYRotation();
     
         int16_t getXAcceleration();
         int16_t getYAcceleration();

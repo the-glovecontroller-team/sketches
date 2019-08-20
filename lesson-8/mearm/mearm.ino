@@ -5,8 +5,6 @@
 #define UPDOWN_SERVO_UP 170
 #define UPDOWN_SERVO_DOWN 10
 
-void parseData(String inputData, int outputData[]);
-
 Servo clawServo;
 Servo upDownServo;
 Servo xRotationServo;
@@ -16,6 +14,7 @@ bool clawOpened;
 bool upDown; // true -> вверх(up); false -> вниз(down) 
 
 void setup() {
+    // Установка управляющих пинов для серв
     clawServo.attach(8);
     upDownServo.attach(9);
     xRotationServo.attach(10);
@@ -57,13 +56,13 @@ void loop() {
 
         // Читаем данные о повороте вокруг оси X в диапазоне (-100, 100) и переводим их в диапазон (0, 180)
         int value = -out[4];
-        int adaptedValue = (constrain(value, -100, 100) + 100) * 180 / 200;
+        int adaptedValue = map(value, -100, 100, 0, 180);
         // Поворачиваем серво
         xRotationServo.write(adaptedValue);
 
         // Читаем данные о повороте вокруг оси Y в диапазоне (-100, 100) и переводим их в диапазон (0, 180)
         value = -out[5];
-        adaptedValue = (constrain(value, -100, 100) + 100) * 180 / 200;
+        adaptedValue = map(value, -100, 100, 0, 180);
         // Поворачиваем серво
         yRotationServo.write(adaptedValue);
 

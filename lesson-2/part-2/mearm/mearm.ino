@@ -23,8 +23,6 @@ void setup() {
     pinMode(X_ROT_POT_PIN, INPUT);
     pinMode(Y_ROT_POT_PIN, INPUT);
 
-    Serial.begin(9600);
-
     // Установка управляющих пинов для серв
     clawServo.attach(8);
     upDownServo.attach(9);
@@ -42,7 +40,7 @@ void loop() {
     int data[4];
     readData(data);
 
-    // Читаем данные о замыкании первого пальца и поворачиваем серво
+    // Считываем состояние кнопки и поворачиваем серво
     if (data[0] == 1) {
         // Если клешня открыта - закрываем, если нет - ничего не делаем
         if (clawOpened) {

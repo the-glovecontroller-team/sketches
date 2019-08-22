@@ -24,12 +24,18 @@ class AccelGyroController {
         void enableDmp();
     
         void getMotion6(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz);
-    
+
+        /*
+         * Функции этого блока считывают показания акселерметра напрямую
+         */
         void getAcceleration(int16_t* x, int16_t* y, int16_t* z);
         int16_t getAccelerationX();
         int16_t getAccelerationY();
         int16_t getAccelerationZ();
-    
+        
+        /*
+         * Функции этого блока считывают показания гироскопа напрямую
+         */      
         void getRotation(int16_t* x, int16_t* y, int16_t* z);
         int16_t getRotationX();
         int16_t getRotationY();
@@ -39,12 +45,19 @@ class AccelGyroController {
     
         // Используйте перед тем, как получить данные с DMP
         void waitForDmpDataReady();
-    
+
+        /*
+         * Функции этого блока возвращают значения линейного ускорения, посчитанного на DMP
+         */    
         void getLinearAcceleration(int16_t* x, int16_t* y, int16_t* z);
         int16_t getLinearAccelerationX();
         int16_t getLinearAccelerationY();
         int16_t getLinearAccelerationZ();
-    
+
+        /*
+         * Функции этого блока возвращают значения линейного ускорения, посчитанного на DMP
+         * В отличие от getLinearAcceleration() переводит значение в "мировые" координаты
+         */
         void getLinearAccelerationInWorld(int16_t* x, int16_t* y, int16_t* z);
         int16_t getLinearAccelerationInWorldX();
         int16_t getLinearAccelerationInWorldY();

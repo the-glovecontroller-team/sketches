@@ -23,12 +23,11 @@ bool SmoothGyro::testConnection() {
 void SmoothGyro::updatePosition() {
     // Считываем значения с датчиков напрямую
     int16_t accelX, accelY, accelZ;
-    int16_t gyroX, gyroY, gyroZ;
-    mpu->getMotion6(&accelX, &accelY, &accelZ, &gyroX, &gyroY, &gyroZ);
+    mpu->getAcceleration(&accelX, &accelY, &accelZ);
 
     // Запоминаем значения с датчиков для сглаживания
-    updateVar(accelX, xRotValues, &xRotationUpdates);
-    updateVar(accelY, yRotValues, &yRotationUpdates);
+    updateVar(accelX, xRotationValues, &xRotationUpdates);
+    updateVar(accelY, yRotationValues, &yRotationUpdates);
 
     // Считываем значения из DMP
     mpu->waitForDmpDataReady();
@@ -40,49 +39,49 @@ void SmoothGyro::updatePosition() {
     updateVar(dZPos, zAccelValues, &zAccelUpdates);
 }
 
-void SmoothGyro::updateVar(int16_t newVal, int16_t* arr, int16_t* upd) {
+void SmoothGyro::updateVar(int16_t newValue, int16_t* valuesArray, int* updTimes) {
     // Если массив заполнен, выкидываем первое значение, и записываем новое в конец.
-    if (*upd == SMOOTH_TIMES) {
+    if (*updTimes == SMOOTH_TIMES) {
         for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
-            arr[i] = arr[i + 1];
+            valuesArray[i] = valuesArray[i + 1];
         }
-        arr[SMOOTH_TIMES - 1] = newVal;
+        valuesArray[SMOOTH_TIMES - 1] = newValue;
     }
     // Иначе просто записываем значение в конец массива
     else {
-        arr[*upd] = newVal;
-        (*upd)++;
+        valuesArray[*updTimes] = newValue;
+        (*updTimes)++;
     }
 }
 
 
 // Возвращаем сглаженное значение в заданном диапазоне
-int16_t SmoothGyro::getXRotation() {
+int SmoothGyro::getXRotation() {
     int32_t sum = 0;
     for (int i = 0; i < xRotationUpdates; i++) {
-        sum += xRotValues[i];
+        sum += xRotationValues[i];
     }
-    return (int16_t)(sum / (xRotationUpdates * divider));
+    return constrain((int)(sum / (xRotationUpdates * divider)), -100, 100);
 }
 
-int16_t SmoothGyro::getYRotation() {
+int SmoothGyro::getYRotation() {
     int32_t sum = 0;
     for (int i = 0; i < yRotationUpdates; i++) {
-        sum += yRotValues[i];
+        sum += yRotationValues[i];
     }
-    return (int16_t)(sum / (yRotationUpdates * divider));
+    return constrain((int)(sum / (yRotationUpdates * divider)), -100, 100);
 }
 
 // Для данных, полученных с DMP, сглаживание не требуется - оно выполняется на самом DMP
-int16_t SmoothGyro::getXAcceleration() {
+int SmoothGyro::getXAcceleration() {
     return mpu->getLinearAccelerationInWorldX() / 100;
 }
 
-int16_t SmoothGyro::getYAcceleration() {
+int SmoothGyro::getYAcceleration() {
     return mpu->getLinearAccelerationInWorldY() / 100;
 }
 
-int16_t SmoothGyro::getZAcceleration() {
+int SmoothGyro::getZAcceleration() {
     return mpu->getLinearAccelerationInWorldZ() / 100;
 }
 

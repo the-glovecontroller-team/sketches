@@ -25,29 +25,32 @@ void setup() {
     pinMode(FINGER_4_PIN, INPUT);
 
     Serial.begin(9600);
-
-    // Инициализируем гироскоп
-    Serial.println("Initializing MPU6050...");
-    gyro = new SmoothGyro();
-
-    // Проверяем соединение
-    Serial.println(gyro->testConnection() ? "MPU6050 connection successful. Send a character to start receiving data" : "MPU6050 connection failed");
+    Serial.println("Initializing...");
 
     // Обнуляем переменные
     zDirection = 0;
-    enableData = false;
+    
+    gyro = new SmoothGyro();
+    // Проверяем подключение к MPU6050
+    bool initializedGood = gyro->testConnection();
+
+    if (initializedGood) {
+        // Сообщаем подключенному устройству, что мы готовы отправлять данные
+        Serial.println("OK");
+    } else {
+        // Ошибка! Мы не можем отправлять данные
+        Serial.println("ERROR : MPU6050 connection failed.");
+    }
+
+    while (!Serial.available() or !initializedGood) {
+        // Дожидаемся ответа от подключенного устройства, что оно готово принимать данные
+    }
 }
 
 /*
    Цикл обработки событий
 */
 void loop() {
-    if (enableData == false) {
-        if (Serial.available() > 0) {
-            enableData = true;
-        }
-        return;
-    }
 
     // status - текущие положения датчиков, ответ перчатки, разделителем будет служить ","
     String status = "";

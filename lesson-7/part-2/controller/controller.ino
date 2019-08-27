@@ -8,10 +8,10 @@
 AccelGyroController* mpu;
 
 #define SMOOTH_TIMES 5
-int xRotationValues[SMOOTH_TIMES];
-int yRotationValues[SMOOTH_TIMES];
-int xRotationUpdates;
-int yRotationUpdates;
+int xRotationValues[SMOOTH_TIMES] = {0};
+int yRotationValues[SMOOTH_TIMES] = {0};
+int xRotationUpdates = 0;
+int yRotationUpdates = 0;
 
 /*
    Подготовка устройства
@@ -25,9 +25,6 @@ void setup() {
 
     Serial.begin(9600);
     Serial.println("Initializing...");
-
-    xRotationUpdates = 0;
-    yRotationUpdates = 0;
 
     mpu = new AccelGyroController();
     // Проверяем подключение к MPU6050
@@ -63,8 +60,8 @@ void loop() {
     int accelX, accelY, accelZ;
     mpu->getAcceleration(&accelX, &accelY, &accelZ);
 
-    updateVar(accelX, xRotationValues, &xRotationUpdates);
-    updateVar(accelY, yRotationValues, &yRotationUpdates);
+    updateValue(accelX, xRotationValues, &xRotationUpdates);
+    updateValue(accelY, yRotationValues, &yRotationUpdates);
 
     // Добавляем к статусу сглаженное значение поворота вдоль оси Х
     long int sum = 0;
@@ -72,7 +69,7 @@ void loop() {
         sum += xRotationValues[i];
     }
     status += (int)(sum / xRotationUpdates);
-    
+
     status += ",";
 
     // Добавляем к статусу сглаженное значение поворота вдоль оси Y
@@ -90,17 +87,20 @@ void loop() {
 
 }
 
-void updateVar(int newValue, int* valuesArray, int* updTimes) {
-    // Если массив заполнен, выкидываем первое значение, и записываем новое в конец.
-    if (*updTimes == SMOOTH_TIMES) {
-        for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
-            valuesArray[i] = valuesArray[i + 1];
-        }
-        valuesArray[SMOOTH_TIMES - 1] = newValue;
+/*
+ * Вспомогательная функция для метода скользящего среднего.
+ * valuesWindow[] - окно значений
+ * newValue - новое значение для обработки
+ * windowWidth - текущая ширина окна
+ */
+void updateValue(int newValue, int valuesWindow[], int* windowWidth) {
+    if (*windowWidth < SMOOTH_TIMES) {
+        (*windowWidth)++; 
     }
-    // Иначе просто записываем значение в конец массива
-    else {
-        valuesArray[*updTimes] = newValue;
-        (*updTimes)++;
+    
+    for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
+        valuesWindow[i] = valuesWindow[i + 1];
     }
+    valuesWindow[SMOOTH_TIMES - 1] = newValue;
+
 }

@@ -33,8 +33,9 @@ class SmoothGyro {
     
     private:
         // Массивы с текущими значениями
-        int16_t xRotationValues[SMOOTH_TIMES], yRotationValues[SMOOTH_TIMES];
-        int16_t zAccelValues[SMOOTH_TIMES];
+        int16_t xRotationValues[SMOOTH_TIMES] = {0};
+        int16_t yRotationValues[SMOOTH_TIMES] = {0};
+        int16_t zAccelValues[SMOOTH_TIMES] = {0};
         // Текущее количество последних значений
         int xRotationUpdates, yRotationUpdates, zAccelUpdates;
         // Множитель для перевода значений в нужный диапазон
@@ -45,8 +46,13 @@ class SmoothGyro {
         // Гироскоп
         AccelGyroController* mpu;
     
-        // Обновить значение
-        void updateVar(int16_t newValue, int16_t* valuesArray, int* updTimes);
+        /*
+         * Вспомогательная функция для метода скользящего среднего.
+         * valuesWindow[] - окно значений
+         * newValue - новое значение для обработки
+         * windowWidth - текущая ширина окна
+         */
+        void updateValue(int16_t newValue, int16_t valuesWindow[], int* windowWidth);
 };
 
 #endif

@@ -8,6 +8,7 @@ SmoothGyro::SmoothGyro() {
     xRotationUpdates = 0;
     yRotationUpdates = 0;
     zAccelUpdates = 0;
+    
     // Вычисляем множитель для перевода значений в нужный диапазон
     divider = DEFAULT_POSITIONS / POSITIONS;
 }
@@ -26,8 +27,8 @@ void SmoothGyro::updatePosition() {
     mpu->getAcceleration(&accelX, &accelY, &accelZ);
 
     // Запоминаем значения с датчиков для сглаживания
-    updateVar(accelX, xRotationValues, &xRotationUpdates);
-    updateVar(accelY, yRotationValues, &yRotationUpdates);
+    updateValue(accelX, xRotationValues, &xRotationUpdates);
+    updateValue(accelY, yRotationValues, &yRotationUpdates);
 
     // Считываем значения из DMP
     mpu->waitForDmpDataReady();
@@ -36,22 +37,18 @@ void SmoothGyro::updatePosition() {
     int16_t zPos = getZAcceleration();
     int16_t dZPos = zPos - prevZPos;
     prevZPos = zPos;
-    updateVar(dZPos, zAccelValues, &zAccelUpdates);
+    updateValue(dZPos, zAccelValues, &zAccelUpdates);
 }
 
-void SmoothGyro::updateVar(int16_t newValue, int16_t* valuesArray, int* updTimes) {
-    // Если массив заполнен, выкидываем первое значение, и записываем новое в конец.
-    if (*updTimes == SMOOTH_TIMES) {
-        for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
-            valuesArray[i] = valuesArray[i + 1];
-        }
-        valuesArray[SMOOTH_TIMES - 1] = newValue;
+void SmoothGyro::updateValue(int16_t newValue, int16_t valuesWindow[], int* windowWidth) {
+    if (*windowWidth < SMOOTH_TIMES) {
+        (*windowWidth)++; 
     }
-    // Иначе просто записываем значение в конец массива
-    else {
-        valuesArray[*updTimes] = newValue;
-        (*updTimes)++;
+    
+    for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
+        valuesWindow[i] = valuesWindow[i + 1];
     }
+    valuesWindow[SMOOTH_TIMES - 1] = newValue;
 }
 
 

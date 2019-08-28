@@ -41,14 +41,14 @@ void SmoothGyro::updatePosition() {
 }
 
 void SmoothGyro::updateValue(int16_t newValue, int16_t valuesWindow[], int* windowWidth) {
-    if (*windowWidth < SMOOTH_TIMES) {
+    if (*windowWidth < MAX_WINDOW_WIDTH) {
         (*windowWidth)++; 
     }
     
-    for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
+    for (int i = 0; i < MAX_WINDOW_WIDTH - 1; i++) {
         valuesWindow[i] = valuesWindow[i + 1];
     }
-    valuesWindow[SMOOTH_TIMES - 1] = newValue;
+    valuesWindow[MAX_WINDOW_WIDTH - 1] = newValue;
 }
 
 

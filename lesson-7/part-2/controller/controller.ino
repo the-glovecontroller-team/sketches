@@ -7,9 +7,9 @@
 
 AccelGyroController* mpu;
 
-#define SMOOTH_TIMES 5
-int xRotationValues[SMOOTH_TIMES] = {0};
-int yRotationValues[SMOOTH_TIMES] = {0};
+#define MAX_WINDOW_WIDTH 5
+int xRotationValues[MAX_WINDOW_WIDTH] = {0};
+int yRotationValues[MAX_WINDOW_WIDTH] = {0};
 int xRotationUpdates = 0;
 int yRotationUpdates = 0;
 
@@ -94,13 +94,13 @@ void loop() {
  * windowWidth - текущая ширина окна
  */
 void updateValue(int newValue, int valuesWindow[], int* windowWidth) {
-    if (*windowWidth < SMOOTH_TIMES) {
+    if (*windowWidth < MAX_WINDOW_WIDTH) {
         (*windowWidth)++; 
     }
     
-    for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
+    for (int i = 0; i < MAX_WINDOW_WIDTH - 1; i++) {
         valuesWindow[i] = valuesWindow[i + 1];
     }
-    valuesWindow[SMOOTH_TIMES - 1] = newValue;
+    valuesWindow[MAX_WINDOW_WIDTH - 1] = newValue;
 
 }

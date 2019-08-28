@@ -7,8 +7,8 @@
 #define POSITIONS 100
 // Количество различимых углов наклона гироскопа
 #define DEFAULT_POSITIONS 17000
-// Количество сглаживаний измерений
-#define SMOOTH_TIMES 5
+// Ширина окна для сглаживаний измерений
+#define MAX_WINDOW_WIDTH 5
 
 class SmoothGyro {
     public:
@@ -33,9 +33,9 @@ class SmoothGyro {
     
     private:
         // Массивы с текущими значениями
-        int16_t xRotationValues[SMOOTH_TIMES] = {0};
-        int16_t yRotationValues[SMOOTH_TIMES] = {0};
-        int16_t zAccelValues[SMOOTH_TIMES] = {0};
+        int16_t xRotationValues[MAX_WINDOW_WIDTH] = {0};
+        int16_t yRotationValues[MAX_WINDOW_WIDTH] = {0};
+        int16_t zAccelValues[MAX_WINDOW_WIDTH] = {0};
         // Текущее количество последних значений
         int xRotationUpdates, yRotationUpdates, zAccelUpdates;
         // Множитель для перевода значений в нужный диапазон

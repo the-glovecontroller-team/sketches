@@ -1,43 +1,43 @@
-#ifndef SMOOTH_GYRO
-#define SMOOTH_GYRO
+#ifndef SMOOTH_ACCEL
+#define SMOOTH_ACCEL
 
 #include "AccelGyroController.h"
 
-// Количество различимых углов наклона на выходе
-#define POSITIONS 100
-// Количество различимых углов наклона гироскопа
-#define DEFAULT_POSITIONS 17000
+// Модуль максимального значения возвращаемых данных
+#define MAX_OUTPUT_VALUE 100
+// Модуль максимального значения данных с MPU6050
+#define MAX_INPUT_VALUE 17000
 // Ширина окна для сглаживаний измерений
 #define MAX_WINDOW_WIDTH 5
 
-class SmoothGyro {
+class SmoothAccel {
     public:
-        SmoothGyro();
-        ~SmoothGyro();
+        SmoothAccel();
+        ~SmoothAccel();
     
         // Проверить подключение гироскопа
         bool testConnection();
     
         // Обновить значения
-        void updatePosition();
+        void updateData();
     
         // Получить значения
-        int getXRotation();
-        int getYRotation();
-    
         int getXAcceleration();
         int getYAcceleration();
-        int getZAcceleration();
+    
+        int getDmpXAcceleration();
+        int getDmpYAcceleration();
+        int getDmpZAcceleration();
 
         int16_t getZAccelerationDelta();
     
     private:
         // Массивы с текущими значениями
-        int16_t xRotationValues[MAX_WINDOW_WIDTH] = {0};
-        int16_t yRotationValues[MAX_WINDOW_WIDTH] = {0};
+        int16_t xAccelValues[MAX_WINDOW_WIDTH] = {0};
+        int16_t yAccelValues[MAX_WINDOW_WIDTH] = {0};
         int16_t zAccelValues[MAX_WINDOW_WIDTH] = {0};
         // Текущее количество последних значений
-        int xRotationUpdates, yRotationUpdates, zAccelUpdates;
+        int xAccelUpdates, yAccelUpdates, zAccelUpdates;
         // Множитель для перевода значений в нужный диапазон
         int divider;
     

@@ -11,7 +11,7 @@ Servo xRotationServo;
 Servo yRotationServo;
 
 bool clawOpened;
-bool upDown; // true -> вверх(up); false -> вниз(down) 
+bool upDown; // true -> вверх(up); false -> вниз(down)
 
 void setup() {
     // Установка управляющих пинов для серв
@@ -27,21 +27,33 @@ void setup() {
     upDown = true;
 
     Serial.begin(9600);
-    
-    // Ждем, инициализации устройства управления
-    delay(10000);
-    Serial.write("ready");
+    bool connectionSuccess = false;
+    char lastByte = ' ';
+
+    // Ждём сообщения "ОК\n" согласно нашему протоколу
+    while(!connectionSuccess) {
+        if(Serial.available()) {
+            char incomingByte = Serial.read();
+            if (lastByte == 'O' and incomingByte == 'K') {
+                // Пропускаем "\n"
+                Serial.read();
+                Serial.println("OK!");
+                break;
+            }
+            lastByte = incomingByte;
+        }
+    }
 }
 
 void loop() {
     if (Serial.available()) {
         // Формат сообщения: "int,int,int,int,int,int,int\n"
         String input = Serial.readStringUntil('\n');
-        int out[7];
-        parseData(input, out);
+        int data[7];
+        parseData(input, data);
 
         // Читаем данные о замыкании первого пальца и поворачиваем серво
-        if (out[0] == 1) {
+        if (data[0] == 1) {
             // Если клешня открыта - закрываем, если нет - ничего не делаем
             if (clawOpened) {
                 clawServo.write(CLAW_SERVO_CLOSE);
@@ -55,24 +67,24 @@ void loop() {
         }
 
         // Читаем данные о повороте вокруг оси X в диапазоне (-100, 100) и переводим их в диапазон (0, 180)
-        int value = -out[4];
+        int value = -data[4];
         int adaptedValue = map(value, -100, 100, 0, 180);
         // Поворачиваем серво
         xRotationServo.write(adaptedValue);
 
         // Читаем данные о повороте вокруг оси Y в диапазоне (-100, 100) и переводим их в диапазон (0, 180)
-        value = -out[5];
+        value = -data[5];
         adaptedValue = map(value, -100, 100, 0, 180);
         // Поворачиваем серво
         yRotationServo.write(adaptedValue);
 
         // Читаем данные о движении вверх/вниз и поворачиваем серво
-        if (out[6] > 0) {
+        if (data[6] > 0) {
             if (!upDown) {
                 upDownServo.write(UPDOWN_SERVO_UP);
                 upDown = true;
             }
-        } else if(out[6] < 0) {
+        } else if(data[6] < 0) {
             if (upDown) {
                 upDownServo.write(UPDOWN_SERVO_DOWN);
                 upDown = false;

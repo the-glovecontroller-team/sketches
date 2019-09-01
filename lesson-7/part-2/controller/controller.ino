@@ -7,11 +7,11 @@
 
 AccelGyroController* mpu;
 
-#define SMOOTH_TIMES 5
-int xRotationValues[SMOOTH_TIMES];
-int yRotationValues[SMOOTH_TIMES];
-int xRotationUpdates;
-int yRotationUpdates;
+#define MAX_WINDOW_WIDTH 5
+int xAccelValues[MAX_WINDOW_WIDTH] = {0};
+int yAccelValues[MAX_WINDOW_WIDTH] = {0};
+int xAccelUpdates = 0;
+int yAccelUpdates = 0;
 
 /*
    Подготовка устройства
@@ -25,9 +25,6 @@ void setup() {
 
     Serial.begin(9600);
     Serial.println("Initializing...");
-
-    xRotationUpdates = 0;
-    yRotationUpdates = 0;
 
     mpu = new AccelGyroController();
     // Проверяем подключение к MPU6050
@@ -63,24 +60,24 @@ void loop() {
     int accelX, accelY, accelZ;
     mpu->getAcceleration(&accelX, &accelY, &accelZ);
 
-    updateVar(accelX, xRotationValues, &xRotationUpdates);
-    updateVar(accelY, yRotationValues, &yRotationUpdates);
+    updateValue(accelX, xAccelValues, &xAccelUpdates);
+    updateValue(accelY, yAccelValues, &yAccelUpdates);
 
     // Добавляем к статусу сглаженное значение поворота вдоль оси Х
     long int sum = 0;
-    for (int i = 0; i < xRotationUpdates; i++) {
-        sum += xRotationValues[i];
+    for (int i = 0; i < xAccelUpdates; i++) {
+        sum += xAccelValues[i];
     }
-    status += (int)(sum / xRotationUpdates);
-    
+    status += (int)(sum / xAccelUpdates);
+
     status += ",";
 
     // Добавляем к статусу сглаженное значение поворота вдоль оси Y
     sum = 0;
-    for (int i = 0; i < yRotationUpdates; i++) {
-        sum += yRotationValues[i];
+    for (int i = 0; i < yAccelUpdates; i++) {
+        sum += yAccelValues[i];
     }
-    status += (int)(sum / yRotationUpdates);
+    status += (int)(sum / yAccelUpdates);
 
     // В итоге получаем сообщение вида "a,b,c,d,e,f\n",
     // где a, b, c и d - положения 4х пальцев (0 или 1)
@@ -90,17 +87,20 @@ void loop() {
 
 }
 
-void updateVar(int newValue, int* valuesArray, int* updTimes) {
-    // Если массив заполнен, выкидываем первое значение, и записываем новое в конец.
-    if (*updTimes == SMOOTH_TIMES) {
-        for (int i = 0; i < SMOOTH_TIMES - 1; i++) {
-            valuesArray[i] = valuesArray[i + 1];
-        }
-        valuesArray[SMOOTH_TIMES - 1] = newValue;
+/*
+ * Вспомогательная функция для метода скользящего среднего.
+ * valuesWindow[] - окно значений
+ * newValue - новое значение для обработки
+ * windowWidth - текущая ширина окна
+ */
+void updateValue(int newValue, int valuesWindow[], int* windowWidth) {
+    if (*windowWidth < MAX_WINDOW_WIDTH) {
+        (*windowWidth)++; 
     }
-    // Иначе просто записываем значение в конец массива
-    else {
-        valuesArray[*updTimes] = newValue;
-        (*updTimes)++;
+    
+    for (int i = 0; i < MAX_WINDOW_WIDTH - 1; i++) {
+        valuesWindow[i] = valuesWindow[i + 1];
     }
+    valuesWindow[MAX_WINDOW_WIDTH - 1] = newValue;
+
 }

@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "SmoothGyro.h"
+#include "SmoothAccel.h"
 
 #define FINGER_1_PIN 8
 #define FINGER_2_PIN 9
@@ -8,7 +8,7 @@
 
 int getDirection(int prevDirection, int16_t delta);
 
-SmoothGyro* gyro;
+SmoothAccel* gyro;
 
 int zDirection;
 
@@ -30,7 +30,7 @@ void setup() {
     // Обнуляем переменные
     zDirection = 0;
     
-    gyro = new SmoothGyro();
+    gyro = new SmoothAccel();
     // Проверяем подключение к MPU6050
     bool initializedGood = gyro->testConnection();
 
@@ -61,15 +61,15 @@ void loop() {
     status += (digitalRead(FINGER_4_PIN) == 1) ? "1," : "0,";
 
     // Обновляем позицию гироскопа (считываем данные)
-    gyro->updatePosition();
+    gyro->updateData();
 
     zDirection = getDirection(zDirection, gyro->getZAccelerationDelta());
 
     // Записываем поворот вокруг оси X
-    status += gyro->getXRotation();
+    status += gyro->getXAcceleration();
     status += ",";
     // Записываем поворот вокруг оси Y
-    status += gyro->getYRotation();
+    status += gyro->getYAcceleration();
     status += ",";
     // Записываем сдвиг по оси Z
     status += zDirection;

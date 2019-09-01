@@ -8,10 +8,10 @@
 AccelGyroController* mpu;
 
 #define MAX_WINDOW_WIDTH 5
-int xRotationValues[MAX_WINDOW_WIDTH] = {0};
-int yRotationValues[MAX_WINDOW_WIDTH] = {0};
-int xRotationUpdates = 0;
-int yRotationUpdates = 0;
+int xAccelValues[MAX_WINDOW_WIDTH] = {0};
+int yAccelValues[MAX_WINDOW_WIDTH] = {0};
+int xAccelUpdates = 0;
+int yAccelUpdates = 0;
 
 /*
    Подготовка устройства
@@ -60,24 +60,24 @@ void loop() {
     int accelX, accelY, accelZ;
     mpu->getAcceleration(&accelX, &accelY, &accelZ);
 
-    updateValue(accelX, xRotationValues, &xRotationUpdates);
-    updateValue(accelY, yRotationValues, &yRotationUpdates);
+    updateValue(accelX, xAccelValues, &xAccelUpdates);
+    updateValue(accelY, yAccelValues, &yAccelUpdates);
 
     // Добавляем к статусу сглаженное значение поворота вдоль оси Х
     long int sum = 0;
-    for (int i = 0; i < xRotationUpdates; i++) {
-        sum += xRotationValues[i];
+    for (int i = 0; i < xAccelUpdates; i++) {
+        sum += xAccelValues[i];
     }
-    status += (int)(sum / xRotationUpdates);
+    status += (int)(sum / xAccelUpdates);
 
     status += ",";
 
     // Добавляем к статусу сглаженное значение поворота вдоль оси Y
     sum = 0;
-    for (int i = 0; i < yRotationUpdates; i++) {
-        sum += yRotationValues[i];
+    for (int i = 0; i < yAccelUpdates; i++) {
+        sum += yAccelValues[i];
     }
-    status += (int)(sum / yRotationUpdates);
+    status += (int)(sum / yAccelUpdates);
 
     // В итоге получаем сообщение вида "a,b,c,d,e,f\n",
     // где a, b, c и d - положения 4х пальцев (0 или 1)

@@ -1,18 +1,17 @@
-#include <Arduino.h>
-#include "SmoothAccel.h"
+#include "AccelGyroController.h"
 
 #define FINGER_1_PIN 8
 #define FINGER_2_PIN 9
 #define FINGER_3_PIN 10
 #define FINGER_4_PIN 11
 
-int getDirection(int prevDirection, int16_t delta);
+AccelGyroController* mpu;
 
-SmoothAccel* gyro;
-
-int zDirection;
-
-bool enableData;
+#define MAX_WINDOW_WIDTH 5
+int xAccelValues[MAX_WINDOW_WIDTH] = {0};
+int yAccelValues[MAX_WINDOW_WIDTH] = {0};
+int xAccelUpdates = 0;
+int yAccelUpdates = 0;
 
 /*
    Подготовка устройства
@@ -27,12 +26,9 @@ void setup() {
     Serial.begin(9600);
     Serial.println("Initializing...");
 
-    // Обнуляем переменные
-    zDirection = 0;
-    
-    gyro = new SmoothAccel();
+    mpu = new AccelGyroController();
     // Проверяем подключение к MPU6050
-    bool initializedGood = gyro->testConnection();
+    bool initializedGood = mpu->testConnection();
 
     if (initializedGood) {
         // Сообщаем подключенному устройству, что мы готовы отправлять данные
@@ -56,39 +52,56 @@ void loop() {
     String status = "";
     // Добавляем к статусу состояние каждого пальца
     // Если на пине "0" -> палец замкнут -> в сообщение записываем "1", иначе - "0"
-    status += (digitalRead(FINGER_1_PIN) == 1) ? "1," : "0,";
-    status += (digitalRead(FINGER_2_PIN) == 1) ? "1," : "0,";
-    status += (digitalRead(FINGER_3_PIN) == 1) ? "1," : "0,";
-    status += (digitalRead(FINGER_4_PIN) == 1) ? "1," : "0,";
+    status += (digitalRead(FINGER_1_PIN) == 0) ? "1," : "0,";
+    status += (digitalRead(FINGER_2_PIN) == 0) ? "1," : "0,";
+    status += (digitalRead(FINGER_3_PIN) == 0) ? "1," : "0,";
+    status += (digitalRead(FINGER_4_PIN) == 0) ? "1," : "0,";
 
-    // Обновляем позицию гироскопа (считываем данные)
-    gyro->updateData();
+    // Обрабатываем данные с акселерометра
+    int accelX, accelY, accelZ;
+    mpu->getAcceleration(&accelX, &accelY, &accelZ);
 
-    zDirection = getDirection(zDirection, gyro->getZAccelerationDelta());
+    updateValue(accelX, xAccelValues, &xAccelUpdates);
+    updateValue(accelY, yAccelValues, &yAccelUpdates);
 
-    // Записываем поворот вокруг оси X
-    status += gyro->getXAcceleration();
+    // Добавляем к статусу сглаженное значение поворота вдоль оси Х
+    long int sum = 0;
+    for (int i = 0; i < xAccelUpdates; i++) {
+        sum += xAccelValues[i];
+    }
+    status += (int)(sum / xAccelUpdates);
+
     status += ",";
-    // Записываем поворот вокруг оси Y
-    status += gyro->getYAcceleration();
-    status += ",";
-    // Записываем сдвиг по оси Z
-    status += zDirection;
 
-    // В итоге получаем сообщение вида "a,b,c,d,e,f,g\n",
+    // Добавляем к статусу сглаженное значение поворота вдоль оси Y
+    sum = 0;
+    for (int i = 0; i < yAccelUpdates; i++) {
+        sum += yAccelValues[i];
+    }
+    status += (int)(sum / yAccelUpdates);
+
+    // В итоге получаем сообщение вида "a,b,c,d,e,f\n",
     // где a, b, c и d - положения 4х пальцев (0 или 1)
-    // e, f - наклоны вдоль осей X и Y (от -100 до 100)
-    // g - сдвиг по оси z (-1 - вниз, 0 - нет сдвига, 1 - вверх)
+    // e и f - повороты вдоль оси X и Y
     // Передаем результат по последовательному порту.
     Serial.println(status);
+
 }
 
-int getDirection(int prevDirection, int16_t delta) {
-    if (prevDirection == 0 and delta > 9) {
-        return -1;
-    } else if (prevDirection == 0 and delta < -8) {
-        return 1;
-    } else if (delta < 1 and delta > -1) {
-        return 0;
+/*
+ * Вспомогательная функция для метода скользящего среднего.
+ * valuesWindow[] - окно значений
+ * newValue - новое значение для обработки
+ * windowWidth - текущая ширина окна
+ */
+void updateValue(int newValue, int valuesWindow[], int* windowWidth) {
+    if (*windowWidth < MAX_WINDOW_WIDTH) {
+        (*windowWidth)++; 
     }
+    
+    for (int i = 0; i < MAX_WINDOW_WIDTH - 1; i++) {
+        valuesWindow[i] = valuesWindow[i + 1];
+    }
+    valuesWindow[MAX_WINDOW_WIDTH - 1] = newValue;
+
 }

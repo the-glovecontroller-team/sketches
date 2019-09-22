@@ -4,14 +4,21 @@
 #define FINGER_2_PIN 9
 #define FINGER_3_PIN 10
 #define FINGER_4_PIN 11
+// Модуль максимального значения возвращаемых данных
+#define MAX_OUTPUT_VALUE 100
+// Модуль максимального значения данных с MPU6050 (определен экспериментально)
+#define MAX_INPUT_VALUE 17000
+// Вычисляем множитель для перевода значений в нужный диапазон
+int divider = MAX_INPUT_VALUE / MAX_OUTPUT_VALUE;
 
-AccelGyroController* mpu;
-
-#define MAX_WINDOW_WIDTH 5
+// Ширина окна для сглаживаний измерений
+#define MAX_WINDOW_WIDTH 8
 int xAccelValues[MAX_WINDOW_WIDTH] = {0};
 int yAccelValues[MAX_WINDOW_WIDTH] = {0};
 int xAccelUpdates = 0;
 int yAccelUpdates = 0;
+
+AccelGyroController* mpu;
 
 /*
    Подготовка устройства
@@ -69,7 +76,7 @@ void loop() {
     for (int i = 0; i < xAccelUpdates; i++) {
         sum += xAccelValues[i];
     }
-    status += (int)(sum / xAccelUpdates);
+    status += constrain((int)(sum / (xAccelUpdates * divider)), -MAX_OUTPUT_VALUE, MAX_OUTPUT_VALUE);
 
     status += ",";
 
@@ -78,7 +85,7 @@ void loop() {
     for (int i = 0; i < yAccelUpdates; i++) {
         sum += yAccelValues[i];
     }
-    status += (int)(sum / yAccelUpdates);
+    status += constrain((int)(sum / (yAccelUpdates * divider)), -MAX_OUTPUT_VALUE, MAX_OUTPUT_VALUE);
 
     // В итоге получаем сообщение вида "a,b,c,d,e,f\n",
     // где a, b, c и d - положения 4х пальцев (0 или 1)

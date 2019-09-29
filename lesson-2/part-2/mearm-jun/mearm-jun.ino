@@ -13,8 +13,6 @@ Servo upDownServo;
 Servo xRotationServo;
 Servo yRotationServo;
 
-bool clawOpened;
-
 void setup() {
     // Устанавливаем пины для потенциометров и кнопки в режим чтения
     pinMode(BUTTON_PIN, INPUT_PULLUP);

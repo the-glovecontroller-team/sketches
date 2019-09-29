@@ -17,7 +17,7 @@ bool clawOpened;
 
 void setup() {
     // Устанавливаем пины для потенциометров и кнопки в режим чтения
-    pinMode(BUTTON_PIN, INPUT);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
     pinMode(X_ROT_POT_PIN, INPUT);
     pinMode(Y_ROT_POT_PIN, INPUT);
     pinMode(UPDOWN_POT_PIN, INPUT);

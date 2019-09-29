@@ -13,8 +13,6 @@ Servo upDownServo;
 Servo xRotationServo;
 Servo yRotationServo;
 
-bool clawOpened;
-
 void setup() {
     // Установка управляющих пинов для серв
     clawServo.attach(8);

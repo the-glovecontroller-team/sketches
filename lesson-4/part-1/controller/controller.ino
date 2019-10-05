@@ -4,8 +4,6 @@
 #define FINGER_3_PIN 10
 #define FINGER_4_PIN 11
 
-bool enableData;
-
 /*
    Подготовка устройства
 */

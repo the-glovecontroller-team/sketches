@@ -17,28 +17,12 @@ void setup() {
     pinMode(FINGER_4_PIN, INPUT_PULLUP);
 
     Serial.begin(9600);
-    Serial.println("Initializing...");
-
-    // Обнуляем переменные
-    enableData = false;
-
-    // Сообщаем подключенному устройству, что мы готовы отправлять данные
-    Serial.println("OK");
 }
 
 /*
    Цикл обработки событий
 */
 void loop() {
-    
-    // Дожидаемся ответа от подключенного устройства, что оно готово принимать данные
-    if (enableData == false) {
-        if (Serial.available() > 0) {
-            enableData = true;
-        }
-        return;
-    }
-
     // status - текущие положения датчиков, ответ перчатки, разделителем будет служить ","
     String status = "";
     // Добавляем к статусу состояние каждого пальца

@@ -4,6 +4,7 @@
 #define FINGER_2_PIN 9
 #define FINGER_3_PIN 10
 #define FINGER_4_PIN 11
+#define STATUS_LED_PIN 12
 // Модуль максимального значения возвращаемых данных
 #define MAX_OUTPUT_VALUE 100
 // Модуль максимального значения данных с MPU6050 (определен экспериментально)
@@ -29,6 +30,7 @@ void setup() {
     pinMode(FINGER_2_PIN, INPUT_PULLUP);
     pinMode(FINGER_3_PIN, INPUT_PULLUP);
     pinMode(FINGER_4_PIN, INPUT_PULLUP);
+    pinMode(STATUS_LED_PIN, OUTPUT);
 
     Serial.begin(9600);
     Serial.println("Initializing...");
@@ -40,9 +42,11 @@ void setup() {
     if (initializedGood) {
         // Сообщаем подключенному устройству, что мы готовы отправлять данные
         Serial.println("OK");
+        digitalWrite(STATUS_LED_PIN, LOW);
     } else {
         // Ошибка! Мы не можем отправлять данные
         Serial.println("ERROR : MPU6050 connection failed.");
+        digitalWrite(STATUS_LED_PIN, HIGH);
     }
 
     while (!Serial.available() or !initializedGood) {
@@ -55,14 +59,14 @@ void setup() {
 */
 void loop() {
 
-    // status - текущие положения датчиков, ответ перчатки, разделителем будет служить ","
-    String status = "";
-    // Добавляем к статусу состояние каждого пальца
+    // message - текущие положения датчиков, ответ перчатки, разделителем будет служить ","
+    String message = "";
+    // Добавляем к сообщению состояние каждого пальца
     // Если на пине "0" -> палец замкнут -> в сообщение записываем "1", иначе - "0"
-    status += (digitalRead(FINGER_1_PIN) == 0) ? "1," : "0,";
-    status += (digitalRead(FINGER_2_PIN) == 0) ? "1," : "0,";
-    status += (digitalRead(FINGER_3_PIN) == 0) ? "1," : "0,";
-    status += (digitalRead(FINGER_4_PIN) == 0) ? "1," : "0,";
+    message += (digitalRead(FINGER_1_PIN) == 0) ? "1," : "0,";
+    message += (digitalRead(FINGER_2_PIN) == 0) ? "1," : "0,";
+    message += (digitalRead(FINGER_3_PIN) == 0) ? "1," : "0,";
+    message += (digitalRead(FINGER_4_PIN) == 0) ? "1," : "0,";
 
     // Обрабатываем данные с акселерометра
     int accelX, accelY, accelZ;
@@ -71,27 +75,27 @@ void loop() {
     updateValue(accelX, xAccelValues, &xAccelUpdates);
     updateValue(accelY, yAccelValues, &yAccelUpdates);
 
-    // Добавляем к статусу сглаженное значение поворота вдоль оси Х
+    // Добавляем к сообщению сглаженное значение поворота вдоль оси Х
     long int sum = 0;
     for (int i = 0; i < xAccelUpdates; i++) {
         sum += xAccelValues[i];
     }
-    status += constrain((int)(sum / (xAccelUpdates * divider)), -MAX_OUTPUT_VALUE, MAX_OUTPUT_VALUE);
+    message += constrain((int)(sum / (xAccelUpdates * divider)), -MAX_OUTPUT_VALUE, MAX_OUTPUT_VALUE);
 
-    status += ",";
+    message += ",";
 
-    // Добавляем к статусу сглаженное значение поворота вдоль оси Y
+    // Добавляем к сообщению сглаженное значение поворота вдоль оси Y
     sum = 0;
     for (int i = 0; i < yAccelUpdates; i++) {
         sum += yAccelValues[i];
     }
-    status += constrain((int)(sum / (yAccelUpdates * divider)), -MAX_OUTPUT_VALUE, MAX_OUTPUT_VALUE);
+    message += constrain((int)(sum / (yAccelUpdates * divider)), -MAX_OUTPUT_VALUE, MAX_OUTPUT_VALUE);
 
     // В итоге получаем сообщение вида "a,b,c,d,e,f\n",
     // где a, b, c и d - положения 4х пальцев (0 или 1)
     // e и f - повороты вдоль оси X и Y
     // Передаем результат по последовательному порту.
-    Serial.println(status);
+    Serial.println(message);
 
 }
 

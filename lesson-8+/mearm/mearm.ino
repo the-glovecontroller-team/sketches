@@ -2,16 +2,24 @@
 
 #define CLAW_SERVO_OPEN 90
 #define CLAW_SERVO_CLOSE 180
-#define UPDOWN_SERVO_UP 170
-#define UPDOWN_SERVO_DOWN 10
 
 Servo clawServo;
 Servo upDownServo;
 Servo xRotationServo;
 Servo yRotationServo;
 
-bool clawOpened;
-bool upDown; // true -> вверх(up); false -> вниз(down)
+// Режим клешни
+// true -> однокнопочный режим; false -> двухкнопочный режим
+bool clawMode;
+
+// Предыдущее значение кнопки, переключающей режим.
+// Нужно, чтобы при зажатой кнопке не переключать режим каждый такт.
+int prevModeValue;
+
+// Текущее состояние клешни
+int clawState;
+
+enum { F_INDEX, F_MIDDLE, F_RING, F_PINKY, ROT_X, ROT_Y } dataPositions;
 
 void setup() {
     // Установка управляющих пинов для серв
@@ -22,17 +30,16 @@ void setup() {
 
     // Установка серв в их начальные позиции
     clawServo.write(CLAW_SERVO_OPEN);
-    upDownServo.write(UPDOWN_SERVO_UP);
-    clawOpened = true;
-    upDown = true;
+    clawState = CLAW_SERVO_OPEN;
+    clawMode = true;
 
     Serial.begin(9600);
     bool connectionSuccess = false;
     char lastByte = ' ';
 
     // Ждём сообщения "ОК\n" согласно нашему протоколу
-    while(!connectionSuccess) {
-        if(Serial.available()) {
+    while (!connectionSuccess) {
+        if (Serial.available()) {
             char incomingByte = Serial.read();
             if (lastByte == 'O' and incomingByte == 'K') {
                 // Пропускаем "\n"
@@ -52,44 +59,55 @@ void loop() {
         int data[7];
         parseData(input, data);
 
-        // Читаем данные о замыкании первого пальца и поворачиваем серво
-        if (data[0] == 1) {
-            // Если клешня открыта - закрываем, если нет - ничего не делаем
-            if (clawOpened) {
-                clawServo.write(CLAW_SERVO_CLOSE);
-                clawOpened = false;
+        if (data[F_PINKY] == 1 and prevModeValue != 1) {
+            clawMode = !clawMode; // Переключаем режим на обратный
+        }
+        prevModeValue = data[F_PINKY];
+
+        if (clawMode) {
+            // Однокнопочный режим управления клешней
+            // Читаем данные о замыкании первого пальца и поворачиваем серво
+            if (data[F_INDEX] == 1) {
+                // Если клешня открыта - закрываем, если нет - ничего не делаем
+                if (clawState == CLAW_SERVO_OPEN) {
+                    clawServo.write(CLAW_SERVO_CLOSE);
+                    clawState = CLAW_SERVO_CLOSE;
+                }
+            } else {
+                if (clawState == CLAW_SERVO_CLOSE) {
+                    clawServo.write(CLAW_SERVO_OPEN);
+                    clawState = CLAW_SERVO_OPEN;
+                }
             }
         } else {
-            if (!clawOpened) {
-                clawServo.write(CLAW_SERVO_OPEN);
-                clawOpened = true;
+            // Двухкнопочный режим управления клешней
+            if (data[F_MIDDLE] == 1) {
+                if (clawState > CLAW_SERVO_OPEN) {
+                    clawState--;
+                    clawServo.write(clawState);
+                }
+            } else if (data[F_RING] == 1) {
+                if (clawState < CLAW_SERVO_CLOSE) {
+                    clawState++;
+                    clawServo.write(clawState);
+                }
             }
         }
 
         // Читаем данные о повороте вокруг оси X в диапазоне (-100, 100) и переводим их в диапазон (0, 180)
-        int value = -data[4];
+        int value = -data[ROT_X];
         int adaptedValue = map(value, -100, 100, 0, 180);
         // Поворачиваем серво
         xRotationServo.write(adaptedValue);
 
         // Читаем данные о повороте вокруг оси Y в диапазоне (-100, 100) и переводим их в диапазон (0, 180)
-        value = -data[5];
+        value = -data[ROT_Y];
         adaptedValue = map(value, -100, 100, 0, 180);
         // Поворачиваем серво
         yRotationServo.write(adaptedValue);
 
-        // Читаем данные о движении вверх/вниз и поворачиваем серво
-        if (data[6] > 0) {
-            if (!upDown) {
-                upDownServo.write(UPDOWN_SERVO_UP);
-                upDown = true;
-            }
-        } else if(data[6] < 0) {
-            if (upDown) {
-                upDownServo.write(UPDOWN_SERVO_DOWN);
-                upDown = false;
-            }
-        }
+        adaptedValue = map(value, -100, 100, 30, 150);
+        upDownServo.write(adaptedValue);
     }
 }
 
